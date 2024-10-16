@@ -5,7 +5,10 @@ const port = process.env.PORT || 8080;
 const colors = require('colors');
 
 
-mongoose.connect(process.env.DB_URL, {}).then(() => {
+mongoose.connect(process.env.DB_URL, {
+    // useNewUrlParser: true,
+    // useUnifiedTopology: true
+}).then(() => {
     try {
         console.log('Database Connect is Success'.green);
     } catch (error) {
