@@ -1,0 +1,1 @@
+// To create a signup form where users can upload an image using Multer, and store the user information (including the image) with Mongoose in an MVC (Model-View-Controller) pattern

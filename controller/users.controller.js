@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const { signUpService, existUserService } = require("../service/users.service");
 const bcrypt = require('bcryptjs');
+const { generateJwtToken } = require("../utilities/jwt-token");
 
 
 // Register Logic
@@ -15,6 +16,9 @@ exports.signUp = async (req, res, next) => {
             image: userData?.image
         };
 
+        // GENERATE JWT TOKEN
+        const jwt_token = generateJwtToken(userData);
+
         const existUser = await User.findOne({ email });
         if (existUser) {
             return res.status(400).send({ message: 'email already exist' })
@@ -23,14 +27,17 @@ exports.signUp = async (req, res, next) => {
         const userCreated = await User.create(userInfo)
         res.status(200).send({
             status: 'success',
-            data: userCreated
+            message: "Signup Success",
+            token: jwt_token
         })
     } catch (error) {
-        res.status(500).send({
-            status: 'failed',
-            error: error.message
-        });
-        next(error)
+        const errorDetails = {
+            error: error,
+            status: 500,
+            message: error.message,
+            errmsg: "error from signup controllers"
+        }
+        next(errorDetails)
     }
 };
 
@@ -38,12 +45,19 @@ exports.signUp = async (req, res, next) => {
 exports.login = async (req, res, next) => {
     try {
         const { name, email, password, image } = req.body;
+        const userData = req.body;
+
+        // GENERATE JWT TOKEN
+        const jwt_token = generateJwtToken(userData);
+
         const existUser = await User.findOne({ email });
         if (!existUser) {
             return res.status(401).send({
                 message: "Invalid Credentials"
             })
         };
+
+
         // const isPassword = await bcrypt.compare(password, existUser.password);
         const isPassword = await existUser.comparePassword(password);
 
@@ -56,7 +70,7 @@ exports.login = async (req, res, next) => {
             res.status(200).json({
                 status: "success",
                 message: "Login Success",
-                data: existUser
+                token: jwt_token
             })
         } else {
             res.status(500).json({
@@ -64,10 +78,12 @@ exports.login = async (req, res, next) => {
             })
         }
     } catch (error) {
-        res.status(500).json({
-            status: "failed",
-            message: error.message
-        })
-        next(error)
+        const errorDetails = {
+            error: error,
+            status: 500,
+            message: error.message,
+            errmsg: "error from login controllers"
+        }
+        next(errorDetails);
     }
 }
