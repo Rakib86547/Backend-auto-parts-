@@ -9,13 +9,14 @@ exports.signUp = async (req, res, next) => {
     try {
         const { email } = req.body;
         const userData = req.body;
+        const image = req.file ? req.file.path : null
         const userInfo = {
             name: userData?.name,
             email: userData?.email,
             password: userData?.password,
-            image: userData?.image
+            image: image
         };
-
+        // console.log(userInfo)
         // GENERATE JWT TOKEN
         const jwt_token = generateJwtToken(userData);
 
@@ -24,11 +25,21 @@ exports.signUp = async (req, res, next) => {
             return res.status(400).send({ message: 'email already exist' })
         }
 
-        const userCreated = await User.create(userInfo)
+        const userCreated = await User.create(userInfo);
+        const users = {
+            name: userCreated?.name,
+            email: userCreated?.email,
+            image: userCreated?.image,
+            _id: userCreated?._id,
+            createdAt: userCreated?.createdAt,
+            updatedAt: userCreated?.updatedAt
+
+        }
         res.status(200).send({
             status: 'success',
             message: "Signup Success",
-            token: jwt_token
+            token: jwt_token,
+            user: users
         })
     } catch (error) {
         const errorDetails = {
@@ -87,3 +98,15 @@ exports.login = async (req, res, next) => {
         next(errorDetails);
     }
 }
+
+// // Backend: Use 'multer' middleware if you're handling file uploads
+// const multer = require('multer');
+// const upload = multer({ dest: 'uploads/' });
+
+// // Assuming 'file' is the key you're using for file input in frontend
+// app.post('/user/signup', upload.single('file'), async (req, res) => {
+//     const { name, email, password, confirmPassword } = req.body;
+//     const image = req.file;  // The uploaded file
+
+//     // Ensure you're handling the file correctly, for example, saving the image path to the DB
+// });

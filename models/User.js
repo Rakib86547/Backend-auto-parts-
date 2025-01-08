@@ -46,11 +46,12 @@ const userSchema = new mongoose.Schema({
     //         message: 'password did not match'
     //     }
     // },
-    image: {
-        type: String,
-        required: [true, 'please insert image'],
-        validate: [validator.isURL, 'image is not valid']
-    }
+    // image: {
+    //     type: String,
+    //     required: [true, 'please insert image'],
+    //     validate: [validator.isURL, 'image is not valid']
+    // }
+    image: {type: String}
 }, {
     timestamps: true
 });
