@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const nodemailer = require("nodemailer");
 const { signUpService, existUserService } = require("../service/users.service");
 const bcrypt = require('bcryptjs');
 const { generateJwtToken } = require("../utilities/jwt-token");
@@ -55,7 +56,7 @@ exports.signUp = async (req, res, next) => {
 // Login Logics
 exports.login = async (req, res, next) => {
     try {
-        const { name, email, password, image } = req.body;
+        const { email, password } = req.body;
         const userData = req.body;
 
         // GENERATE JWT TOKEN
@@ -68,6 +69,18 @@ exports.login = async (req, res, next) => {
             })
         };
 
+        const user = await User.findOne({ email });
+        if (user) {
+            user.image = `${req.protocol}://${req.get('host')}${user.profileImage}`;
+        }
+
+        const users = {
+            name: user?.name,
+            email: user?.email,
+            image: user?.image,
+            createdAt: user?.createdAt,
+            updatedAt: user?.updatedAt
+        }
 
         // const isPassword = await bcrypt.compare(password, existUser.password);
         const isPassword = await existUser.comparePassword(password);
@@ -81,6 +94,7 @@ exports.login = async (req, res, next) => {
             res.status(200).json({
                 status: "success",
                 message: "Login Success",
+                user: users,
                 token: jwt_token
             })
         } else {
@@ -97,16 +111,51 @@ exports.login = async (req, res, next) => {
         }
         next(errorDetails);
     }
+};
+
+// Request Reset Password
+exports.requestPasswordReset = async (req, res, next) => {
+    const email = req.query.email;
+    console.log(email)
+    try {
+        const user = await User.findOne({ email });
+        if (!user.email) {
+            return res.status(500).send({ message: 'User does not exist' })
+        };
+
+        // --- the bellow code is when you want to verify with token ----
+        // const secret = process.env.JWT + user.password;
+        // const token = jwt.sign({ id: user._id, email: user.email }, secret, { expiresIn: '1h' });
+
+        const resetUrl = 'http://localhost:5173/reset-page';
+        console.log(user)
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.Email,
+                pass: process.env.Password
+            }
+        });
+
+        const mailOptions = {
+            to: user.email,
+            from: 'AutoParts',
+            subject: 'Password Reset Request',
+            text: `
+                You are receiving this because you have forgot your password of your account.
+                Please click on the following link, or paste this into your browser to complete the process:${resetUrl}               
+            `
+        };
+        await transporter.sendMail(mailOptions)
+        res.status(200).json({ message: 'Password reset link sent' });
+    } catch (error) {
+        const errorDetails = {
+            error: error,
+            status: 500,
+            message: error.message,
+            errmsg: "error from request password reset"
+        }
+        next(errorDetails);
+    }
 }
 
-// // Backend: Use 'multer' middleware if you're handling file uploads
-// const multer = require('multer');
-// const upload = multer({ dest: 'uploads/' });
-
-// // Assuming 'file' is the key you're using for file input in frontend
-// app.post('/user/signup', upload.single('file'), async (req, res) => {
-//     const { name, email, password, confirmPassword } = req.body;
-//     const image = req.file;  // The uploaded file
-
-//     // Ensure you're handling the file correctly, for example, saving the image path to the DB
-// });
