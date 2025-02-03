@@ -51,7 +51,9 @@ const userSchema = new mongoose.Schema({
     //     required: [true, 'please insert image'],
     //     validate: [validator.isURL, 'image is not valid']
     // }
-    image: {type: String}
+    image: { type: String },
+    resetPasswordToken: { type: String },
+    resetPasswordExpire: { type: Date, default: Date.now }
 }, {
     timestamps: true
 });

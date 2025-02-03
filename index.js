@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const path = require('path')
 
 //Middlewares
 app.use(express.json());
@@ -12,6 +13,7 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true, 
 }));
+app.use('/files', express.static(path.join(__dirname, 'files')));
 
 
 
